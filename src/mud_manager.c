@@ -195,8 +195,8 @@ int executeMudWithDhcpContext(DhcpEvent *dhcpEvent)
 
 	MudFileInfo *mudFile = parseMudFile(dhcpEvent->mudFileStorageLocation);
 	
-	snprintf(mymessage, 100, "EXTRA: description mudfile is %s", mudFile->description);
-	logOmsGeneralMessage(OMS_INFO, OMS_SUBSYS_DEVICE_INTERFACE, mymessage);
+	snprintf(myLogMessage, 100, "EXTRA: description mudfile is %s", mudFile->description);
+	logOmsGeneralMessage(OMS_INFO, OMS_SUBSYS_DEVICE_INTERFACE, myLogMessage);
 
 	// Loop over mud file and carry out actions
 	if (mudFile) {
