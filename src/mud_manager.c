@@ -71,6 +71,7 @@ int buildPortRange(char *portBuf, int portBufSize, AceEntry *ace)
 		snprintf(portBuf, portBufSize, "%s:%s", ace->lowerPort, ace->upperPort);
 	portBuf[portBufSize-1] = '\0';
 
+	logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_DEVICE_INTERFACE, portBuf);
 	return retval;
 }
 
@@ -183,6 +184,7 @@ int executeMudWithDhcpContext(DhcpEvent *dhcpEvent)
 	int i;
 	int retval = 0; // non-zero indicates errors
 	int actionResult = 0;
+	char myLogMessage[100];
 
 	logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_GENERAL, "IN ****NEW**** executeMudWithDhcpContext()");
 
@@ -192,6 +194,9 @@ int executeMudWithDhcpContext(DhcpEvent *dhcpEvent)
 			dhcpEvent->mudFileURL, dhcpEvent->mudFileStorageLocation, dhcpEvent->hostName);
 
 	MudFileInfo *mudFile = parseMudFile(dhcpEvent->mudFileStorageLocation);
+	
+	snprintf(mymessage, 100, "EXTRA: description mudfile is %s", mudFile->description);
+	logOmsGeneralMessage(OMS_INFO, OMS_SUBSYS_DEVICE_INTERFACE, mymessage);
 
 	// Loop over mud file and carry out actions
 	if (mudFile) {
@@ -273,6 +278,11 @@ void executeNewDhcpAction(DhcpEvent *dhcpEvent)
 		dhcpEvent->mudFileStorageLocation = createStorageLocation(dhcpEvent->mudFileURL);
 		dhcpEvent->mudSigFileStorageLocation = createStorageLocation(dhcpEvent->mudSigURL);
 
+		snprintf(myLogMessage, 100, "EXTRA: The result of mudURL is %s", dhcpEvent->mudFileURL);
+		logOmsGeneralMessage(OMS_INFO, OMS_SUBSYS_GENERAL, myLogMessage);
+		snprintf(myLogMessage, 100, "EXTRA: The result of sigURL is %s", dhcpEvent->mudSigURL);
+		logOmsGeneralMessage(OMS_INFO, OMS_SUBSYS_GENERAL, myLogMessage);
+
 		/* We are processing a MUD aware device. Go to the MUD file server and get the usage description */
 		/* non-zero return code indicates error during communications */
 		/* Mud files and signature files are stored in their computed storage locations for future reference */
@@ -286,7 +296,7 @@ void executeNewDhcpAction(DhcpEvent *dhcpEvent)
 				|| (noFailOnMudValidation))
 			{
 
-				logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_MUD_FILE, "IN ****NEW**** MUD and SIG FILE RETRIEVED!!!");
+				logOmsGeneralMessage(OMS_INFO, OMS_SUBSYS_MUD_FILE, "IN ****NEW**** MUD and SIG FILE RETRIEVED!!!");
 
 				if ((validateMudFileWithSig(dhcpEvent) == VALID_MUD_FILE_SIG)
 					|| (noFailOnMudValidation))
@@ -317,7 +327,7 @@ void executeNewDhcpAction(DhcpEvent *dhcpEvent)
 	else
 	{
 		/* This is a legacy non-MUD aware device. */
-		logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_MUD_FILE, "IN ****NEW**** LEGACY DEVICE -- no mud file declared.");
+		logOmsGeneralMessage(OMS_INFO, OMS_SUBSYS_MUD_FILE, "IN ****NEW**** LEGACY DEVICE -- no mud file declared.");
 		doDhcpLegacyAction(dhcpEvent);
 		installMudDbDeviceEntry(mudFileDataDirectory, dhcpEvent->ipAddress, dhcpEvent->macAddress, NULL, NULL, dhcpEvent->hostName);
 	}
