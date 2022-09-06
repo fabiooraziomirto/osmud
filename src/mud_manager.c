@@ -271,6 +271,7 @@ void executeNewDhcpAction(DhcpEvent *dhcpEvent)
 	char logMsgBuf[4096];
 	buildDhcpEventContext(logMsgBuf, "NEW", dhcpEvent);
 	logOmsGeneralMessage(OMS_INFO, OMS_SUBSYS_GENERAL, logMsgBuf);
+	char myLogMessage[100];
 
 	if ((dhcpEvent) && (dhcpEvent->mudFileURL))
 	{
