@@ -1,17 +1,19 @@
 FROM openwrtorg/rootfs:x86_64
 ARG BUILD_DATE
 LABEL build-date=$BUILD_DATE
+LABEL version=v1.1
 LABEL author="Luca Mannella"
 
-## Non so bene perché ma serve
+## Creating a file to easily see the cointainer version number
+RUN touch openWRT-osMUD-v1.1
+
+## If file `/var/lock/opkg.lock` does not exist the opkg commands fail
 RUN mkdir -p /var/lock/
 RUN touch /var/lock/opkg.lock
 
 ### Installing some useful packages
 RUN opkg update
 RUN opkg install git-http
-# opkg install make
-# opkg install gcc
 RUN opkg install nano
 RUN opkg install curl
 RUN opkg install diffutils
@@ -40,6 +42,12 @@ RUN cat /tmp/lets-encrypt-r3.crt >> /etc/ssl/certs/ca-certificates.crt
 # Adding HAss-certificate
 COPY certificati/HAss-MUD-cert.pem /tmp/
 RUN cat /tmp/HAss-MUD-cert.pem >> /etc/ssl/certs/ca-certificates.crt
+
+# This line creates communication among dnsmasq and osMUD
+RUN echo "dhcp-script=/etc/osmud/detect_new_device.sh" >> /etc/dnsmasq.conf
+
+# Ensuring that dnsmasq is running
+RUN service dnsmasq restart
 
 # Opening a shell
 CMD ["/bin/sh"]
