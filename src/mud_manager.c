@@ -364,7 +364,7 @@ void executeOldDhcpAction(DhcpEvent *dhcpEvent)
 			logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_GENERAL, myLogMessage);
 
 			// 0. Verify that the MUD file really exists
-			if(!access(dhcpEvent->mudFileStorageLocation, F_OK)) {
+			if(access(dhcpEvent->mudFileStorageLocation, F_OK) != 0) {
 				snprintf(myLogMessage, logLen, "There is no MUD file called <%s>", dhcpEvent->mudFileStorageLocation);
 				logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_MUD_FILE, myLogMessage);
 				executeNewDhcpAction(dhcpEvent);
