@@ -338,7 +338,7 @@ void executeOldDhcpAction(DhcpEvent *dhcpEvent)
 {
 	int line, col;  // for keeping track of the differences among files
 	int diff = 1;
-	char tmpFile[4096]
+	char tmpFile[4096];
 	char logMsgBuf[8192];
 	int logLen = 8192;
 	char myLogMessage[logLen];
