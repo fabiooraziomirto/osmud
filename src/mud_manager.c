@@ -353,7 +353,8 @@ void executeOldDhcpAction(DhcpEvent *dhcpEvent)
 		/* In this part we verify it the MUD file was changed. */
 		if (dhcpEvent->mudFileURL) {
 			dhcpEvent->mudFileStorageLocation = createStorageLocation(dhcpEvent->mudFileURL);
-			tmpFile = safe_malloc(sizeof(&dhcpEvent->mudSigFileStorageLocation)+4);
+			tmpFile = safe_malloc(sizeof(dhcpEvent->mudSigFileStorageLocation)+4);
+			tmpFile = strcat(dhcpEvent->mudSigFileStorageLocation, ".tmp")
 
 			snprintf(myLogMessage, 100, "EXTRA: The <mudURL> is %s", dhcpEvent->mudFileURL);
 			logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_GENERAL, myLogMessage);
@@ -362,25 +363,29 @@ void executeOldDhcpAction(DhcpEvent *dhcpEvent)
 			snprintf(myLogMessage, 100, "EXTRA: The <tmpMUDFile> is %s", tmpFile);
 			logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_GENERAL, myLogMessage);
 
+			// 0. Verify that the MUD file really exists
+			if(!access(dhcpEvent->mudFileStorageLocation, F_OK))
+				logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_MUD_FILE, "There is no MUD file called <%s>", dhcpEvent->mudFileStorageLocation);
+				executeNewDhcpAction(dhcpEvent);
+			else {
 			// 1. Download the new MUD file 
-			if(!getOpenMudFile(dhcpEvent->mudFileURL, tmpFile)) {
-				// 2. Verify if the new MUD file is different from the old one
-				diff = compareFiles(dhcpEvent->mudFileStorageLocation, tmpFile, &line, &col);
-				if(diff==0)  // 3a. Same -> Do nothing
-					logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_MUD_FILE, "MUD file is not changed");
-				else {  // 3b. Different
-					// 4. Delete the tmp file
-					remove(tmpFile);
-					// 5. Delete old firewall rules (if present)
-					executeDelDhcpAction(dhcpEvent);
-					// 6. Install new firewall Rules
-					executeNewDhcpAction(dhcpEvent);
+				if(!getOpenMudFile(dhcpEvent->mudFileURL, tmpFile)) {  // != 0 there is an error
+					// 2. Verify if the new MUD file is different from the old one
+					diff = compareFiles(dhcpEvent->mudFileStorageLocation, tmpFile, &line, &col);
+					if(diff==0)  // 3a. Same -> Do nothing
+						logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_MUD_FILE, "MUD file is not changed");
+					else {  // 3b. Different
+						// 4. Delete the tmp file
+						remove(tmpFile);
+						// 5. Delete old firewall rules (if present)
+						executeDelDhcpAction(dhcpEvent);
+						// 6. Install new firewall Rules
+						executeNewDhcpAction(dhcpEvent);
+					}
+				} else {
+					logOmsGeneralMessage(OMS_ERROR, OMS_SUBSYS_MUD_FILE, "ERROR: ****OLD**** NO MUD FILE RETRIEVED!!!");
 				}
 			}
-			else {
-				logOmsGeneralMessage(OMS_ERROR, OMS_SUBSYS_MUD_FILE, "ERROR: ****OLD**** NO MUD FILE RETRIEVED!!!");
-			}
-			
 		}
 		// Releasing memory
 		safe_free(tmpFile);
