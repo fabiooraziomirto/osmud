@@ -29,5 +29,6 @@ int run_command(char **args);
 int run_command_with_output_logged(char *fullCommandLine);
 int mkdir_path(char *path);
 FILE *fopen_with_path( char *path, char *mode );
+int compareFiles(char* filePath1, char* filePath2, int* line, int* col);
 
 #endif
