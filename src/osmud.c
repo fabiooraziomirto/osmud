@@ -181,7 +181,8 @@ void doProcessLoop(FD filed)
 void printVersion()
 {
 	printf("osmud\n");
-	printf("    Version: %s\n", build_git_sha);
+	printf("    Version: %s\n", build_version);
+	printf("    Last Commit: %s\n", build_git_sha);
 	printf("    Build Date: %s\n", build_git_time);
 }
 
@@ -217,16 +218,16 @@ int writePidFile(pid_t osMudPid) {
 	fp = fopen_with_path(osmudPidFile, "w");
 
 	if (fp != NULL)
-        {
-            fprintf(fp, "%d\n", osMudPid);
-
-            fflush(fp);
-            fclose(fp);
-        }
-        else
 	{
-            logOmsGeneralMessage(OMS_CRIT, OMS_SUBSYS_DEVICE_INTERFACE, "Could not write to PID file.");
-            retval = 1;
+		fprintf(fp, "%d\n", osMudPid);
+
+		fflush(fp);
+		fclose(fp);
+	}
+	else
+	{
+		logOmsGeneralMessage(OMS_CRIT, OMS_SUBSYS_DEVICE_INTERFACE, "Could not write to PID file.");
+		retval = 1;
 	}
 
 	return retval;
