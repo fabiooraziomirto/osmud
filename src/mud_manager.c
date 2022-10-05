@@ -339,8 +339,9 @@ void executeOldDhcpAction(DhcpEvent *dhcpEvent)
 	int line, col;  // for keeping track of the differences among files
 	int diff = 1;
 	char tmpFile[4096]
-	char logMsgBuf[4096];
-	char myLogMessage[4096];
+	char logMsgBuf[8192];
+	int logLen = 8192;
+	char myLogMessage[logLen];
 	
 	buildDhcpEventContext(logMsgBuf, "OLD", dhcpEvent);
 	logOmsGeneralMessage(OMS_INFO, OMS_SUBSYS_GENERAL, logMsgBuf);
@@ -353,18 +354,18 @@ void executeOldDhcpAction(DhcpEvent *dhcpEvent)
 		/* In this part we verify it the MUD file was changed. */
 		if (dhcpEvent->mudFileURL) {
 			dhcpEvent->mudFileStorageLocation = createStorageLocation(dhcpEvent->mudFileURL);
-			snprintf(myLogMessage, 100, "EXTRA: The <mudURL> is %s", dhcpEvent->mudFileURL);
+			snprintf(myLogMessage, logLen, "EXTRA: The <mudURL> is %s", dhcpEvent->mudFileURL);
 			logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_GENERAL, myLogMessage);
-			snprintf(myLogMessage, 100, "EXTRA: The <mudFileStorageLocation> is %s", dhcpEvent->mudFileStorageLocation);
+			snprintf(myLogMessage, logLen, "EXTRA: The <mudFileStorageLocation> is %s", dhcpEvent->mudFileStorageLocation);
 			logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_GENERAL, myLogMessage);
 
 			tmpFile = strcat(dhcpEvent->mudSigFileStorageLocation, ".tmp");
-			snprintf(myLogMessage, 100, "EXTRA: The <tmpMUDFile> is %s", tmpFile);
+			snprintf(myLogMessage, logLen, "EXTRA: The <tmpMUDFile> is %s", tmpFile);
 			logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_GENERAL, myLogMessage);
 
 			// 0. Verify that the MUD file really exists
 			if(!access(dhcpEvent->mudFileStorageLocation, F_OK)) {
-				snprintf(myLogMessage, 100, "There is no MUD file called <%s>", dhcpEvent->mudFileStorageLocation);
+				snprintf(myLogMessage, logLen, "There is no MUD file called <%s>", dhcpEvent->mudFileStorageLocation);
 				logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_MUD_FILE, myLogMessage);
 				executeNewDhcpAction(dhcpEvent);
 			} else {
