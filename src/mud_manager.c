@@ -338,9 +338,9 @@ void executeOldDhcpAction(DhcpEvent *dhcpEvent)
 {
 	int line, col;  // for keeping track of the differences among files
 	int diff = 1;
-	char *tmpFile;
+	char tmpFile[4096]
 	char logMsgBuf[4096];
-	char myLogMessage[100];
+	char myLogMessage[4096];
 	
 	buildDhcpEventContext(logMsgBuf, "OLD", dhcpEvent);
 	logOmsGeneralMessage(OMS_INFO, OMS_SUBSYS_GENERAL, logMsgBuf);
@@ -353,13 +353,12 @@ void executeOldDhcpAction(DhcpEvent *dhcpEvent)
 		/* In this part we verify it the MUD file was changed. */
 		if (dhcpEvent->mudFileURL) {
 			dhcpEvent->mudFileStorageLocation = createStorageLocation(dhcpEvent->mudFileURL);
-			tmpFile = safe_malloc(sizeof(dhcpEvent->mudSigFileStorageLocation)+4);
-			tmpFile = strcat(dhcpEvent->mudSigFileStorageLocation, ".tmp");
-
 			snprintf(myLogMessage, 100, "EXTRA: The <mudURL> is %s", dhcpEvent->mudFileURL);
 			logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_GENERAL, myLogMessage);
 			snprintf(myLogMessage, 100, "EXTRA: The <mudFileStorageLocation> is %s", dhcpEvent->mudFileStorageLocation);
 			logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_GENERAL, myLogMessage);
+
+			tmpFile = strcat(dhcpEvent->mudSigFileStorageLocation, ".tmp");
 			snprintf(myLogMessage, 100, "EXTRA: The <tmpMUDFile> is %s", tmpFile);
 			logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_GENERAL, myLogMessage);
 
