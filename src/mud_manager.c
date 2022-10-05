@@ -359,7 +359,7 @@ void executeOldDhcpAction(DhcpEvent *dhcpEvent)
 			snprintf(myLogMessage, logLen, "EXTRA: The <mudFileStorageLocation> is %s", dhcpEvent->mudFileStorageLocation);
 			logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_GENERAL, myLogMessage);
 
-			tmpFile = strcat(dhcpEvent->mudSigFileStorageLocation, ".tmp");
+			snprintf(tmpFile, strlen(tmpFile), "%s.tmp", dhcpEvent->mudSigFileStorageLocation);
 			snprintf(myLogMessage, logLen, "EXTRA: The <tmpMUDFile> is %s", tmpFile);
 			logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_GENERAL, myLogMessage);
 
