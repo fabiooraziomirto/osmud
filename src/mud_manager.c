@@ -35,6 +35,10 @@
 #include "mud_manager.h"
 #include "mudparser.h"
 
+// Just for logging purposes
+#define logLen 1000
+char myLogMessage[logLen];
+
 extern char *dnsWhiteListFile;
 extern int noFailOnMudValidation;
 
@@ -42,10 +46,6 @@ int dhcpNewEventCount = 0;
 int dhcpOldEventCount = 0;
 int dhcpDeleteEventCount = 0;
 int dhcpErrorEventCount = 0;
-
-// Just for logging purposes
-int logLen = 1000;
-char myLogMessage[logLen];
 
 
 void resetDhcpCounters()
