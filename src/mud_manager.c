@@ -35,6 +35,11 @@
 #include "mud_manager.h"
 #include "mudparser.h"
 
+// MAXLINE is the maximum length of a line read from dhcpmasq.txt file
+#ifndef MAXLINE
+	#define MAXLINE 1024
+#endif
+
 // Just for logging purposes
 #define logLen 1000
 char myLogMessage[logLen];
@@ -340,8 +345,7 @@ void executeOldDhcpAction(DhcpEvent *dhcpEvent)
 {
 	int line, col;  // for keeping track of the differences among files
 	int diff = 1;
-	char *tmpFile;
-	int tmpFileLen = -1;
+	char tmpFile[MAXLINE];
 	char logMsgBuf[4096];
 	
 	buildDhcpEventContext(logMsgBuf, "OLD", dhcpEvent);
@@ -355,9 +359,9 @@ void executeOldDhcpAction(DhcpEvent *dhcpEvent)
 		/* In this part we verify it the MUD file was changed. */
 		if (dhcpEvent->mudFileURL) {
 			dhcpEvent->mudFileStorageLocation = createStorageLocation(dhcpEvent->mudFileURL);
-			snprintf(myLogMessage, logLen, "EXTRA: The <mudURL> is %s", dhcpEvent->mudFileURL);
+			snprintf(myLogMessage, logLen, "EXTRA: The mudURL is <%s>", dhcpEvent->mudFileURL);
 			logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_GENERAL, myLogMessage);
-			snprintf(myLogMessage, logLen, "EXTRA: The <mudFileStorageLocation> is %s", dhcpEvent->mudFileStorageLocation);
+			snprintf(myLogMessage, logLen, "EXTRA: The mudFileStorageLocation is <%s>", dhcpEvent->mudFileStorageLocation);
 			logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_GENERAL, myLogMessage);
 
 			// 0. Verify if the MUD file already really exists
@@ -367,34 +371,35 @@ void executeOldDhcpAction(DhcpEvent *dhcpEvent)
 				executeNewDhcpAction(dhcpEvent);
 			} else {
 				// 1. Dinamycally creating a string for containing the temporary file used to compare old with new MUD file
-				tmpFileLen = strlen(dhcpEvent->mudSigFileStorageLocation) + 5;
-				tmpFile = safe_malloc(tmpFileLen*sizeof(char));
-				snprintf(tmpFile, tmpFileLen, "tmp_%s", dhcpEvent->mudSigFileStorageLocation);
+				snprintf(tmpFile, MAXLINE, "%s_tmp.json", dhcpEvent->mudFileStorageLocation);
+				logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_GENERAL, tmpFile);				
+				snprintf(myLogMessage, logLen, "EXTRA: The tmpMUDFile is <%s>", tmpFile);
+				logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_GENERAL, myLogMessage);	
 
-				snprintf(myLogMessage, logLen, "EXTRA: The <tmpMUDFile> is %s", tmpFile);
-				logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_GENERAL, myLogMessage);
-				
 				// 2. Download the new MUD file 
 				if(!getOpenMudFile(dhcpEvent->mudFileURL, tmpFile)) {  // != 0 there is an error
 					// 3. Verify if the new MUD file is different from the old one
+					logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_COMMUNICATION, "Comparing the MUD files");
 					diff = compareFiles(dhcpEvent->mudFileStorageLocation, tmpFile, &line, &col);
 					if(diff==0)  // 4a. Same -> Do nothing
 						logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_MUD_FILE, "MUD file is not changed");
 					else {       // 4b. Different
+						logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_COMMUNICATION, "MUD file changed!");
 						// 5. Delete the tmp file
-						remove(tmpFile);
+						remove(tmpFile);						
+						logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_COMMUNICATION, "tmpFile deleted");
 						// 6. Delete old firewall rules (if present)
 						executeDelDhcpAction(dhcpEvent);
+						logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_COMMUNICATION, "old FW rules deleted");
 						// 7. Install new firewall Rules (the MUD file will be downloaded again)
 						executeNewDhcpAction(dhcpEvent);
+						logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_COMMUNICATION, "new rules created");
 					}
 				} else {
 					logOmsGeneralMessage(OMS_ERROR, OMS_SUBSYS_MUD_FILE, "ERROR: ****OLD**** NO MUD FILE RETRIEVED!!!");
 				}
 			}
 		}
-		// Releasing memory
-		safe_free(tmpFile);
 	}
 }
 
