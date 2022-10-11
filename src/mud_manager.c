@@ -348,6 +348,7 @@ void executeOldDhcpAction(DhcpEvent *dhcpEvent)
 	char tmpFile[MAXLINE];
 	char logMsgBuf[4096];
 	char* argument_list[] = {"diff", "file1", "file2", NULL};
+	char command_buffer[1000];
 	
 	buildDhcpEventContext(logMsgBuf, "OLD", dhcpEvent);
 	logOmsGeneralMessage(OMS_INFO, OMS_SUBSYS_GENERAL, logMsgBuf);
@@ -381,12 +382,14 @@ void executeOldDhcpAction(DhcpEvent *dhcpEvent)
 				if(!getOpenMudFile(dhcpEvent->mudFileURL, tmpFile)) {  // != 0 there is an error
 					// 3. Verify if the new MUD file is different from the old one
 					logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_COMMUNICATION, "Comparing the MUD files");
-					logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_COMMUNICATION, argument_list[0]);
-					argument_list[1] = dhcpEvent->mudFileStorageLocation;
-					logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_COMMUNICATION, argument_list[1]);
-					argument_list[2] = tmpFile;
-					logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_COMMUNICATION, argument_list[2]);
-					run_command(argument_list);
+					// logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_COMMUNICATION, argument_list[0]);
+					// argument_list[1] = dhcpEvent->mudFileStorageLocation;
+					// logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_COMMUNICATION, argument_list[1]);
+					// argument_list[2] = tmpFile;
+					// logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_COMMUNICATION, argument_list[2]);
+					snprintf(command_buffer, logLen, "diff %s %s", dhcpEvent->mudFileStorageLocation, tmpFile);
+					logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_COMMUNICATION, command_buffer);
+					diff = system(command_buffer);
 					// diff = compareFiles(dhcpEvent->mudFileStorageLocation, tmpFile, &line, &col);
 					if(diff==0)  // 4a. Same -> Do nothing
 						logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_MUD_FILE, "MUD file is not changed");
