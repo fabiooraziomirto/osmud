@@ -383,11 +383,11 @@ void executeOldDhcpAction(DhcpEvent *dhcpEvent)
 					logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_MUD_FILE, "Comparing the MUD files");
 					snprintf(command_buffer, logLen, "diff %s %s", dhcpEvent->mudFileStorageLocation, tmpFile);
 					logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_MUD_FILE, command_buffer);
-					
-					sprint(myLogMessage, " --- EXTRA: pre diff value: <%d> --- ", diff);
+
+					snprintf(myLogMessage, logLen, " --- EXTRA: pre diff value: <%d> --- ", diff);
 					logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_COMMUNICATION, myLogMessage);
 					diff = system(command_buffer);
-					sprint(myLogMessage, " --- EXTRA: post diff value: <%d> --- ", diff);
+					snprintf(myLogMessage, logLen, " --- EXTRA: post diff value: <%d> --- ", diff);
 					logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_MUD_FILE, myLogMessage);
 
 					if(diff==0)  // 4a. Same -> Do nothing
@@ -395,7 +395,7 @@ void executeOldDhcpAction(DhcpEvent *dhcpEvent)
 					else {       // 4b. Different
 						logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_MUD_FILE, "MUD file changed!");
 						// 5. Delete the tmp file
-						remove(tmpFile);
+						// remove(tmpFile);
 						logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_MUD_FILE, "tmpFile deleted");
 						// 6. Delete old firewall rules (if present)
 						executeDelDhcpAction(dhcpEvent);
