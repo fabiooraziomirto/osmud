@@ -390,7 +390,7 @@ void executeOldDhcpAction(DhcpEvent *dhcpEvent)
 					snprintf(myLogMessage, logLen, " --- EXTRA: post diff value: <%d> --- ", diff);
 					logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_MUD_FILE, myLogMessage);
 					if (!WEXITSTATUS(diff)) {
-						logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_MUD_FILE, "EXTRA: diff failed!");
+						logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_MUD_FILE, "--- EXTRA: diff failed! ---");
 					}
 					else {
 						diff = WEXITSTATUS(diff)
