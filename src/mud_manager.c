@@ -385,17 +385,25 @@ void executeOldDhcpAction(DhcpEvent *dhcpEvent)
 					logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_MUD_FILE, command_buffer);
 
 					snprintf(myLogMessage, logLen, " --- EXTRA: pre diff value: <%d> --- ", diff);
-					logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_COMMUNICATION, myLogMessage);
+					logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_MUD_FILE, myLogMessage);
 					diff = system(command_buffer);
 					snprintf(myLogMessage, logLen, " --- EXTRA: post diff value: <%d> --- ", diff);
 					logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_MUD_FILE, myLogMessage);
+					if (!WEXITSTATUS(diff)) {
+						logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_MUD_FILE, "EXTRA: diff failed!");
+					}
+					else {
+						diff = WEXITSTATUS(diff)
+						snprintf(myLogMessage, logLen, " --- EXTRA: Real (?) diff value: <%d> --- ", diff);
+						logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_MUD_FILE, myLogMessage);
+					}
 
 					if(diff==0)  // 4a. Same -> Do nothing
 						logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_MUD_FILE, "MUD file is not changed");
 					else {       // 4b. Different
 						logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_MUD_FILE, "MUD file changed!");
 						// 5. Delete the tmp file
-						// remove(tmpFile);
+						remove(tmpFile);
 						logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_MUD_FILE, "tmpFile deleted");
 						// 6. Delete old firewall rules (if present)
 						executeDelDhcpAction(dhcpEvent);
