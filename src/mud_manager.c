@@ -343,11 +343,12 @@ void executeNewDhcpAction(DhcpEvent *dhcpEvent)
 
 int mudFilesAreDifferent(oldMudFile, newMudFile)
 {	// If MUD files are equal returns 0
-	
+	int diff = -1;
+
 	// Verify if the new MUD file is different from the old one
 	logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_MUD_FILE, "Comparing the MUD files");
 
-	snprintf(command_buffer, logLen, "diff %s %s", oldMudFile, tmpFile);
+	snprintf(command_buffer, logLen, "diff %s %s", oldMudFile, newMudFile);
 	logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_MUD_FILE, command_buffer);
 
 	snprintf(myLogMessage, logLen, " --- EXTRA: pre diff value: <%d> --- ", diff);
@@ -370,7 +371,6 @@ int mudFilesAreDifferent(oldMudFile, newMudFile)
 void executeOldDhcpAction(DhcpEvent *dhcpEvent)
 {
 	int line, col;  // for keeping track of the differences among files
-	int diff = -1;
 	char tmpFile[MAXLINE];
 	char logMsgBuf[4096];
 	char command_buffer[1000];
