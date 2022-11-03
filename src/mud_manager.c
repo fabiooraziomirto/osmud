@@ -341,6 +341,32 @@ void executeNewDhcpAction(DhcpEvent *dhcpEvent)
 	}
 }
 
+int mudFilesAreDifferent(oldMudFile, newMudFile)
+{	// If MUD files are equal returns 0
+	
+	// Verify if the new MUD file is different from the old one
+	logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_MUD_FILE, "Comparing the MUD files");
+
+	snprintf(command_buffer, logLen, "diff %s %s", oldMudFile, tmpFile);
+	logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_MUD_FILE, command_buffer);
+
+	snprintf(myLogMessage, logLen, " --- EXTRA: pre diff value: <%d> --- ", diff);
+	logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_MUD_FILE, myLogMessage);
+	diff = system(command_buffer);
+	snprintf(myLogMessage, logLen, " --- EXTRA: post diff value: <%d> --- ", diff);
+	logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_MUD_FILE, myLogMessage);
+	
+	if (!WEXITSTATUS(diff)) {
+		logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_MUD_FILE, "--- EXTRA: diff failed! ---");
+	}
+	else {
+		diff = WEXITSTATUS(diff);
+		snprintf(myLogMessage, logLen, " --- EXTRA: Real (?) diff value: <%d> --- ", diff);
+		logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_MUD_FILE, myLogMessage);
+	}
+	return diff;
+}
+
 void executeOldDhcpAction(DhcpEvent *dhcpEvent)
 {
 	int line, col;  // for keeping track of the differences among files
@@ -379,39 +405,21 @@ void executeOldDhcpAction(DhcpEvent *dhcpEvent)
 
 				// 2. Download the new MUD file 
 				if(!getOpenMudFile(dhcpEvent->mudFileURL, tmpFile)) {  // != 0 there is an error
-					// 3. Verify if the new MUD file is different from the old one
-					logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_MUD_FILE, "Comparing the MUD files");
-					snprintf(command_buffer, logLen, "diff %s %s", dhcpEvent->mudFileStorageLocation, tmpFile);
-					logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_MUD_FILE, command_buffer);
-
-					snprintf(myLogMessage, logLen, " --- EXTRA: pre diff value: <%d> --- ", diff);
-					logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_MUD_FILE, myLogMessage);
-					diff = system(command_buffer);
-					snprintf(myLogMessage, logLen, " --- EXTRA: post diff value: <%d> --- ", diff);
-					logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_MUD_FILE, myLogMessage);
-					if (!WEXITSTATUS(diff)) {
-						logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_MUD_FILE, "--- EXTRA: diff failed! ---");
-					}
-					else {
-						diff = WEXITSTATUS(diff);
-						snprintf(myLogMessage, logLen, " --- EXTRA: Real (?) diff value: <%d> --- ", diff);
-						logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_MUD_FILE, myLogMessage);
-					}
-
-					if(diff==0)  // 4a. Same -> Do nothing
-						logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_MUD_FILE, "MUD file is not changed");
-					else {       // 4b. Different
+					if(mudFilesAreDifferent(dhcpEvent->mudFileStorageLocation, tmpFile)) {
 						logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_MUD_FILE, "MUD file changed!");
-						// 5. Delete the tmp file
-						remove(tmpFile);
-						logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_MUD_FILE, "tmpFile deleted");
-						// 6. Delete old firewall rules (if present)
+						// 3. Delete old firewall rules (if present)
 						executeDelDhcpAction(dhcpEvent);
 						logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_MUD_FILE, "old FW rules deleted");
-						// 7. Install new firewall Rules (the MUD file will be downloaded again)
+						// 4. Install new firewall Rules (the MUD file will be downloaded again)
 						executeNewDhcpAction(dhcpEvent);
 						logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_MUD_FILE, "new rules created");
 					}
+					else { // Same -> Do nothing
+						logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_MUD_FILE, "MUD file is not changed");
+					}
+					// 5. Delete the tmp file
+					remove(tmpFile);
+					logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_MUD_FILE, "tmpFile deleted");
 				} else {
 					logOmsGeneralMessage(OMS_ERROR, OMS_SUBSYS_MUD_FILE, "ERROR: ****OLD**** NO MUD FILE RETRIEVED!!!");
 				}

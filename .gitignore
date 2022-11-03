@@ -51,5 +51,11 @@ Module.symvers
 Mkfile.old
 dkms.conf
 
+# Development
+.vscode/
+
 # My folders
 download/
+ipk/
+certificati/
+useful-file/
