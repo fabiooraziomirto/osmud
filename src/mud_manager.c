@@ -341,9 +341,26 @@ void executeNewDhcpAction(DhcpEvent *dhcpEvent)
 	}
 }
 
+
+void executeDelDhcpAction(DhcpEvent *dhcpEvent)
+{
+	char logMsgBuf[4096];
+	buildDhcpEventContext(logMsgBuf, "DEL", dhcpEvent);
+	logOmsGeneralMessage(OMS_INFO, OMS_SUBSYS_GENERAL, logMsgBuf);
+
+	if (dhcpEvent)
+	{
+		removeFirewallIPRule(dhcpEvent->ipAddress, dhcpEvent->macAddress);
+		removeMudDbDeviceEntry(mudFileDataDirectory, dhcpEvent->ipAddress, dhcpEvent->macAddress);
+		commitAndApplyFirewallRules();
+	}
+}
+
+
 int mudFilesAreDifferent(char* oldMudFile, char* newMudFile)
 {	// If MUD files are equal returns 0
 	int diff = -1;
+	char command_buffer[1000];
 
 	// Verify if the new MUD file is different from the old one
 	logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_MUD_FILE, "Comparing the MUD files");
@@ -373,7 +390,6 @@ void executeOldDhcpAction(DhcpEvent *dhcpEvent)
 	int line, col;  // for keeping track of the differences among files
 	char tmpFile[MAXLINE];
 	char logMsgBuf[4096];
-	char command_buffer[1000];
 	
 	buildDhcpEventContext(logMsgBuf, "OLD", dhcpEvent);
 	logOmsGeneralMessage(OMS_INFO, OMS_SUBSYS_GENERAL, logMsgBuf);
@@ -427,21 +443,6 @@ void executeOldDhcpAction(DhcpEvent *dhcpEvent)
 		}
 	}
 }
-
-void executeDelDhcpAction(DhcpEvent *dhcpEvent)
-{
-	char logMsgBuf[4096];
-	buildDhcpEventContext(logMsgBuf, "DEL", dhcpEvent);
-	logOmsGeneralMessage(OMS_INFO, OMS_SUBSYS_GENERAL, logMsgBuf);
-
-	if (dhcpEvent)
-	{
-		removeFirewallIPRule(dhcpEvent->ipAddress, dhcpEvent->macAddress);
-		removeMudDbDeviceEntry(mudFileDataDirectory, dhcpEvent->ipAddress, dhcpEvent->macAddress);
-		commitAndApplyFirewallRules();
-	}
-}
-
 
 void
 executeOpenMudDhcpAction(DhcpEvent *dhcpEvent)
