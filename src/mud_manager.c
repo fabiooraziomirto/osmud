@@ -341,7 +341,7 @@ void executeNewDhcpAction(DhcpEvent *dhcpEvent)
 	}
 }
 
-int mudFilesAreDifferent(oldMudFile, newMudFile)
+int mudFilesAreDifferent(char* oldMudFile, char* newMudFile)
 {	// If MUD files are equal returns 0
 	int diff = -1;
 
