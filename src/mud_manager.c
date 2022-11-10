@@ -274,9 +274,10 @@ int executeMudWithDhcpContext(DhcpEvent *dhcpEvent)
  * 2) parses the MUD file into a OSMUD data structure representing the MUD file
  * 3) Calls the device specific implementations to implement the features in the mud file
  */
-void executeNewDhcpAction(DhcpEvent *dhcpEvent)
+int executeNewDhcpAction(DhcpEvent *dhcpEvent)
 {
 	char logMsgBuf[4096];
+	int validSignature = INVALID_MUD_FILE_SIG;
 	buildDhcpEventContext(logMsgBuf, "NEW", dhcpEvent);
 	logOmsGeneralMessage(OMS_INFO, OMS_SUBSYS_GENERAL, logMsgBuf);
 
@@ -303,13 +304,10 @@ void executeNewDhcpAction(DhcpEvent *dhcpEvent)
 			if ((!getOpenMudFile(dhcpEvent->mudSigURL, dhcpEvent->mudSigFileStorageLocation))
 				|| (noFailOnMudValidation))
 			{
-
 				logOmsGeneralMessage(OMS_INFO, OMS_SUBSYS_MUD_FILE, "IN ****NEW**** MUD and SIG FILE RETRIEVED!!!");
-
-				if ((validateMudFileWithSig(dhcpEvent) == VALID_MUD_FILE_SIG)
-					|| (noFailOnMudValidation))
-				{
-					/*
+				validSignature = validateMudFileWithSig(dhcpEvent);
+				if ((validSignature == VALID_MUD_FILE_SIG) || (noFailOnMudValidation))
+				{	/*
 					 * All files downloaded and signature valid.
 					 * CALL INTERFACE TO CARRY OUT MUD ACTION HERE
 					 */
@@ -320,16 +318,21 @@ void executeNewDhcpAction(DhcpEvent *dhcpEvent)
 				else
 				{
 					logOmsGeneralMessage(OMS_ERROR, OMS_SUBSYS_MUD_FILE, "ERROR: ****NEW**** BAD SIGNATURE - FAILED VALIDATION!!!");
+					snprintf(myLogMessage, logLen, "EXTRA: noFailOnMudValidation: %d --- validSignature: %d", noFailOnMudValidation, validSignature);
+					logOmsGeneralMessage(OMS_INFO, OMS_SUBSYS_GENERAL, myLogMessage);
+					return -1;
 				}
 			}
 			else
 			{
 				logOmsGeneralMessage(OMS_ERROR, OMS_SUBSYS_MUD_FILE, "ERROR: ****NEW**** NO SIG FILE RETRIEVED!!!");
+				return -2;
 			}
 		}
 		else
 		{
 			logOmsGeneralMessage(OMS_ERROR, OMS_SUBSYS_MUD_FILE, "ERROR: ****NEW**** NO MUD FILE RETRIEVED!!!");
+			return -3;
 		}
 	}
 	else
@@ -338,6 +341,7 @@ void executeNewDhcpAction(DhcpEvent *dhcpEvent)
 		logOmsGeneralMessage(OMS_INFO, OMS_SUBSYS_MUD_FILE, "IN ****NEW**** LEGACY DEVICE -- no mud file declared.");
 		doDhcpLegacyAction(dhcpEvent);
 		installMudDbDeviceEntry(mudFileDataDirectory, dhcpEvent->ipAddress, dhcpEvent->macAddress, NULL, NULL, dhcpEvent->hostName);
+		return 0;
 	}
 }
 
@@ -388,6 +392,7 @@ int mudFilesAreDifferent(char* oldMudFile, char* newMudFile)
 void executeOldDhcpAction(DhcpEvent *dhcpEvent)
 {
 	int line, col;  // for keeping track of the differences among files
+	int retValue = -1;
 	char tmpFile[MAXLINE];
 	char logMsgBuf[4096];
 	
@@ -414,8 +419,10 @@ void executeOldDhcpAction(DhcpEvent *dhcpEvent)
 				executeNewDhcpAction(dhcpEvent);
 			} else {
 				// 1. Dinamycally creating a string for containing the temporary file used to compare old with new MUD file
-				snprintf(tmpFile, MAXLINE, "%s_tmp.json", dhcpEvent->mudFileStorageLocation);
-				logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_GENERAL, tmpFile);				
+				strncpy(tmpFile, dhcpEvent->mudFileStorageLocation, strlen(dhcpEvent->mudFileStorageLocation));
+				replaceExtension(tmpFile, ".tmp.json");
+				// snprintf(tmpFile, MAXLINE, "%s.tmp.json", dhcpEvent->mudFileStorageLocation);
+				// logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_GENERAL, tmpFile);				
 				snprintf(myLogMessage, logLen, "EXTRA: The tmpMUDFile is <%s>", tmpFile);
 				logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_GENERAL, myLogMessage);	
 
@@ -425,10 +432,13 @@ void executeOldDhcpAction(DhcpEvent *dhcpEvent)
 						logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_MUD_FILE, "MUD file changed!");
 						// 3. Delete old firewall rules (if present)
 						executeDelDhcpAction(dhcpEvent);
-						logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_MUD_FILE, "old FW rules deleted");
+						logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_MUD_FILE, "Old FW rules deleted");
 						// 4. Install new firewall Rules (the MUD file will be downloaded again)
-						executeNewDhcpAction(dhcpEvent);
-						logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_MUD_FILE, "new rules created");
+						retValue = executeNewDhcpAction(dhcpEvent);
+						if(retValue == 0)
+							logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_MUD_FILE, "New rules created");
+						else
+							logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_MUD_FILE, "Error creating the new rules!");
 					}
 					else { // Same -> Do nothing
 						logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_MUD_FILE, "MUD file is not changed");
