@@ -393,7 +393,8 @@ void executeOldDhcpAction(DhcpEvent *dhcpEvent)
 {
 	int line, col;  // for keeping track of the differences among files
 	int retValue = -1;
-	char tmpFile[MAXLINE];
+	char* tmpFile;
+	// char tmpFile[MAXLINE];
 	char logMsgBuf[4096];
 	
 	buildDhcpEventContext(logMsgBuf, "OLD", dhcpEvent);
@@ -419,8 +420,8 @@ void executeOldDhcpAction(DhcpEvent *dhcpEvent)
 				executeNewDhcpAction(dhcpEvent);
 			} else {
 				// 1. Dinamycally creating a string for containing the temporary file used to compare old with new MUD file
-				strncpy(tmpFile, dhcpEvent->mudFileStorageLocation, strlen(dhcpEvent->mudFileStorageLocation));
-				tmpFile = replaceExtension(tmpFile, ".tmp.json");
+				tmpFile = replaceExtension(dhcpEvent->mudFileStorageLocation, ".tmp.json");
+				// strncpy(tmpFile, dhcpEvent->mudFileStorageLocation, strlen(dhcpEvent->mudFileStorageLocation));
 				// snprintf(tmpFile, MAXLINE, "%s.tmp.json", dhcpEvent->mudFileStorageLocation);
 				// logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_GENERAL, tmpFile);				
 				snprintf(myLogMessage, logLen, "EXTRA: The tmpMUDFile is <%s>", tmpFile);
