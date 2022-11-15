@@ -420,7 +420,7 @@ void executeOldDhcpAction(DhcpEvent *dhcpEvent)
 			} else {
 				// 1. Dinamycally creating a string for containing the temporary file used to compare old with new MUD file
 				strncpy(tmpFile, dhcpEvent->mudFileStorageLocation, strlen(dhcpEvent->mudFileStorageLocation));
-				replaceExtension(tmpFile, ".tmp.json");
+				tmpFile = replaceExtension(tmpFile, ".tmp.json");
 				// snprintf(tmpFile, MAXLINE, "%s.tmp.json", dhcpEvent->mudFileStorageLocation);
 				// logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_GENERAL, tmpFile);				
 				snprintf(myLogMessage, logLen, "EXTRA: The tmpMUDFile is <%s>", tmpFile);
