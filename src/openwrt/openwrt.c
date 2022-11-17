@@ -244,7 +244,7 @@ int verifyCmsSignature(char *mudFileLocation, char *mudSigFileLocation)
 	logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_GENERAL, logMessage);
 	
 
-	snprintf(execBuf, BUFSIZE, "openssl cms -verify -in %s -inform DER -content %s -purpose any 2>> /var/log/mud_signature_failures.txt", mudSigFileLocation, mudFileLocation);
+	snprintf(execBuf, BUFSIZE, "openssl cms -verify -in %s -inform DER -content %s -purpose any >> /var/log/mud_signature_failures.txt 2>&1", mudSigFileLocation, mudFileLocation);
 	execBuf[BUFSIZE-1] = '\0';
 	logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_GENERAL, execBuf);
 	retval = system(execBuf);
