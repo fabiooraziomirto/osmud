@@ -236,14 +236,28 @@ int verifyCmsSignature(char *mudFileLocation, char *mudSigFileLocation)
 	char logMessage[BUFSIZE];
 	int retval, sigStatus;
 
-	snprintf(execBuf, BUFSIZE, "openssl cms -verify -in %s -inform DER -content %s -purpose any", mudSigFileLocation, mudFileLocation);
+	snprintf(execBuf, BUFSIZE, "ls &> /tmp/ls_result.txt");
+	execBuf[BUFSIZE-1] = '\0';
+	retval = system(execBuf);
+	if (!WEXITSTATUS(retval)) {
+		logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_MUD_FILE, "--- EXTRA: ls probably failed! ---");
+	}
+	snprintf(logMessage, BUFSIZE, "ls returns %d", retval);
+	logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_GENERAL, logMessage);
+	
+
+	snprintf(execBuf, BUFSIZE, "openssl cms -verify -in %s -inform DER -content %s -purpose any &> /tmp/signature_result.txt", mudSigFileLocation, mudFileLocation);
 	execBuf[BUFSIZE-1] = '\0';
 
 	logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_GENERAL, execBuf);
 	retval = system(execBuf);
-
+	if (!WEXITSTATUS(retval)) {
+		logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_MUD_FILE, "--- EXTRA: Signature probably failed! ---");
+	}
 	snprintf(logMessage, BUFSIZE, "Signature verification returns %d", retval);
 	logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_GENERAL, logMessage);
+	
+	
 	/* A non-zero return value indicates the signature on the mud file was invalid */
 	if (retval != 0) {
 		logOmsGeneralMessage(OMS_ERROR, OMS_SUBSYS_DEVICE_INTERFACE, execBuf);
