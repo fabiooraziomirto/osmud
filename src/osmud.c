@@ -33,6 +33,7 @@
 #include "version.h"
 
 #define MAXLINE 1024
+#define LOG_MSG_BUF_LEN 4096
 
 /* Default locations for osMUD resources based on OpenWRT */
 #define MUD_FILE_DIRECTORY "/var/state/osmud/mudfiles"
@@ -235,7 +236,9 @@ int writePidFile(pid_t osMudPid) {
 
 void logInitialSettings()
 {
-	char msgBuf[4096];
+	char msgBuf[LOG_MSG_BUF_LEN];
+	sprintf(msgBuf, "OsMUD\n Version: %s\n Build Date: %s\n Last Commit: %s", build_version, build_git_time, build_git_sha);
+	logOmsGeneralMessage(OMS_INFO, OMS_SUBSYS_GENERAL, msgBuf);
 	logOmsGeneralMessage(OMS_INFO, OMS_SUBSYS_GENERAL, "  Starting OSMUD controlling with initial settings:");
 
 	sprintf(msgBuf, "    PID FILE: %s", osmudPidFile);
