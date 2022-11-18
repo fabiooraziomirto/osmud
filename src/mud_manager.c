@@ -370,7 +370,7 @@ int mudFilesAreDifferent(char* oldMudFile, char* newMudFile)
 	// Verify if the new MUD file is different from the old one
 	logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_MUD_FILE, "EXTRA: Comparing the MUD files");
 
-	snprintf(command_buffer, LOG_MSG_BUF_LEN, "diff %s %s", oldMudFile, newMudFile);
+	snprintf(command_buffer, LOG_MSG_BUF_LEN, "diff %s %s > /dev/null", oldMudFile, newMudFile);
 	command_buffer[LOG_MSG_BUF_LEN-1] = '\0';
 	logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_MUD_FILE, command_buffer);
 	diffRetVal = system(command_buffer);
