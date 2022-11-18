@@ -237,7 +237,7 @@ int writePidFile(pid_t osMudPid) {
 void logInitialSettings()
 {
 	char msgBuf[LOG_MSG_BUF_LEN];
-	sprintf(msgBuf, "OsMUD\n Version: %s\n Build Date: %s\n Last Commit: %s", build_version, build_git_time, build_git_sha);
+	sprintf(msgBuf, "\nOsMUD\n Version: %s\n Build Date: %s\n Last Commit: %s", build_version, build_git_time, build_git_sha);
 	logOmsGeneralMessage(OMS_INFO, OMS_SUBSYS_GENERAL, msgBuf);
 	logOmsGeneralMessage(OMS_INFO, OMS_SUBSYS_GENERAL, "  Starting OSMUD controlling with initial settings:");
 
