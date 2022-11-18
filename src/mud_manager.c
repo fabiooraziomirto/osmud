@@ -428,7 +428,7 @@ void executeOldDhcpAction(DhcpEvent *dhcpEvent)
 
 				// 2. Download the new MUD file 
 				if(!getOpenMudFile(dhcpEvent->mudFileURL, tmpFile)) {  // != 0 there is an error
-					retValue = mudFilesAreDifferent(dhcpEvent->mudFileStorageLocation, tmpFile)
+					retValue = mudFilesAreDifferent(dhcpEvent->mudFileStorageLocation, tmpFile);
 					if(retValue != 0) {
 						logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_MUD_FILE, "MUD file changed!");
 						// 3. Delete old firewall rules (if present)
