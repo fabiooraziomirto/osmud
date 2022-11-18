@@ -380,7 +380,8 @@ int mudFilesAreDifferent(char* oldMudFile, char* newMudFile)
 	
 	if (diffRetVal != 0) {
 		diffRetVal = WEXITSTATUS(diffRetVal);
-		logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_MUD_FILE, "EXTRA: Files are different! diff returns: %d", diffRetVal);
+		snprintf(myLogMessage, LOG_MSG_BUF_LEN, "EXTRA: Files are different! diff returns: %d", diffRetVal);
+		logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_MUD_FILE, myLogMessage);
 	}
 	else {
 		logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_MUD_FILE, "EXTRA: Files are equal!", diffRetVal);
