@@ -47,7 +47,7 @@ BASEDIR=`dirname "$0"`
 usage() { 
   echo "Usage: 
 Required: -t <target_firewall_action> -n <rule-name> -i <src-ip> -a <src-port> 
-Optional: -p <proto> -s <src-zone>  -d <dest-zone> -j <dest-ip> -b <dest-port> -c <device host name>" 1>&2; 
+Optional: -p <proto> -s <src-zone> -d <dest-zone> -j <dest-ip> -b <dest-port> -c <device host name>" 1>&2; 
   exit 0; 
 }
 

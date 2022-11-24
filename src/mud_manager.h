@@ -19,8 +19,11 @@
 #include "json-c/json.h"
 #include "mudparser.h"
 
-#define LAN_DEVICE_NAME "lan"
-#define WAN_DEVICE_NAME "wan"
+// #define LAN_DEVICE_NAME "lan"
+#define LAN_DEVICE_NAME "mud"
+// #define WAN_DEVICE_NAME "wan"
+#define WAN_DEVICE_NAME "lan"
+
 #define DNS_FILE_NAME_WITH_PATH "/etc/dnswhitelist"
 
 #define MUD_FILE_SIGNATURE_EXTENSION "p7s"
