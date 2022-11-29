@@ -138,7 +138,6 @@ int processFromAccess(char *aclName, char *aclType, AclEntry *acl, DhcpEvent *ev
 	return retval;
 }
 
-
 int processToAccess(char *aclName, char *aclType, AclEntry *acl, DhcpEvent *event) {
 	int retval = 0;
 	int actionResult = 0;
@@ -196,70 +195,66 @@ int executeMudWithDhcpContext(DhcpEvent *dhcpEvent)
 	int retval = 0; // non-zero indicates errors
 	int actionResult = 0;
 
-	logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_GENERAL, "IN ****NEW**** executeMudWithDhcpContext()");
+	logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_GENERAL, "IN ****executeMudWithDhcpContext()****");
 
 	/* TODO: We need to check the return code - if this fails, we won't be able to understand the state of the device over time */
 	installMudDbDeviceEntry(mudFileDataDirectory, dhcpEvent->ipAddress, dhcpEvent->macAddress,
 			dhcpEvent->mudFileURL, dhcpEvent->mudFileStorageLocation, dhcpEvent->hostName);
 
 	MudFileInfo *mudFile = parseMudFile(dhcpEvent->mudFileStorageLocation);
-	
-	snprintf(myLogMessage, LOG_MSG_BUF_LEN, "EXTRA: mudfile description: %s", mudFile->systeminfo);
-	logOmsGeneralMessage(OMS_INFO, OMS_SUBSYS_DEVICE_INTERFACE, myLogMessage);
 
-	// Loop over mud file and carry out actions
+	// Loop over MUD file and carry out actions
 	if (mudFile) {
-			// First, remove any prior entry for this device in case a NEW event happens for an existing configured device
-			removeFirewallIPRule(dhcpEvent->ipAddress, dhcpEvent->macAddress);
+		// First, remove any prior entry for this device in case a NEW event happens for an existing configured device
+		removeFirewallIPRule(dhcpEvent->ipAddress, dhcpEvent->macAddress);
 
-			// Second, iterate over the MUD file and apply new rules
-		    for (i = 0; i < mudFile->fromAccessListCount; i++) {
-		    	if (!processFromAccess(mudFile->fromAccessList[i].aclName,
-		    			mudFile->fromAccessList[i].aclType,
-		    			getMudFileAcl(mudFile->fromAccessList[i].aclName, mudFile),
-		    			dhcpEvent)) {
-		    		logOmsGeneralMessage(OMS_INFO, OMS_SUBSYS_DEVICE_INTERFACE, "Successfully installed fromAccess rule.");
-		    	} else {
-		    		logOmsGeneralMessage(OMS_CRIT, OMS_SUBSYS_DEVICE_INTERFACE, "Problems installing fromAccess rule.");
-		    		retval = 1;
-		    	}
-		    }
-
-		    for (i = 0; i < mudFile->toAccessListCount; i++) {
-		    	if (!processToAccess(mudFile->toAccessList[i].aclName,
-		    			mudFile->toAccessList[i].aclType,
-		    			getMudFileAcl(mudFile->toAccessList[i].aclName, mudFile),
-		    			dhcpEvent)) {
-		    		logOmsGeneralMessage(OMS_INFO, OMS_SUBSYS_DEVICE_INTERFACE, "Successfully installed toAccess rule.");
-		    	} else {
-		    		logOmsGeneralMessage(OMS_CRIT, OMS_SUBSYS_DEVICE_INTERFACE, "Problems installing toAccess rule.");
-		    		retval = 1;
-		    	}
-		    }
-
-		    // Install default rule to block all traffic from this IP address unless allowed in the MUD file
-		    // ORDER MATTERS - this rule needs to be installed after all of the individual allow/drop rules
-			actionResult = installFirewallIPRule(dhcpEvent->ipAddress, 		/* srcIp */
-													"any", 					/* destIp */
-													"any",		 			/* destPort */
-													LAN_DEVICE_NAME, 		/* srcDevice - lan or wan */
-													WAN_DEVICE_NAME,		/* destDevice - lan or wan */
-													"all", 					/* protocol - tcp/udp */
-													"REJECT-ALL", 			/* the name of the rule -- TODO: Better rule names by device name*/
-													"DROP",					/* ACCEPT or DROP or REJECT */
-													"all",
-													dhcpEvent->hostName		/* hostname of the new device */ );
-			if (actionResult) {
-				logOmsGeneralMessage(OMS_CRIT, OMS_SUBSYS_DEVICE_INTERFACE, "Problems installing default restrict rule.");
+		// Second, iterate over the MUD file and apply new rules
+		for (i = 0; i < mudFile->fromAccessListCount; i++) {
+			if (!processFromAccess(mudFile->fromAccessList[i].aclName,
+					mudFile->fromAccessList[i].aclType,
+					getMudFileAcl(mudFile->fromAccessList[i].aclName, mudFile),
+					dhcpEvent)) {
+				logOmsGeneralMessage(OMS_INFO, OMS_SUBSYS_DEVICE_INTERFACE, "Successfully installed fromAccess rule.");
+			} else {
+				logOmsGeneralMessage(OMS_CRIT, OMS_SUBSYS_DEVICE_INTERFACE, "Problems installing fromAccess rule.");
 				retval = 1;
 			}
+		}
 
-			// Lastly, commit rules and restart the firewall subsystem
-			if (!retval)
-				commitAndApplyFirewallRules();
-			else
-				rollbackFirewallConfiguration();
+		for (i = 0; i < mudFile->toAccessListCount; i++) {
+			if (!processToAccess(mudFile->toAccessList[i].aclName,
+					mudFile->toAccessList[i].aclType,
+					getMudFileAcl(mudFile->toAccessList[i].aclName, mudFile),
+					dhcpEvent)) {
+				logOmsGeneralMessage(OMS_INFO, OMS_SUBSYS_DEVICE_INTERFACE, "Successfully installed toAccess rule.");
+			} else {
+				logOmsGeneralMessage(OMS_CRIT, OMS_SUBSYS_DEVICE_INTERFACE, "Problems installing toAccess rule.");
+				retval = 1;
+			}
+		}
 
+		// Install default rule to block all traffic from this IP address unless allowed in the MUD file
+		// ORDER MATTERS - this rule needs to be installed after all of the individual allow/drop rules
+		actionResult = installFirewallIPRule(dhcpEvent->ipAddress, 		/* srcIp */
+												"any", 					/* destIp */
+												"any",		 			/* destPort */
+												LAN_DEVICE_NAME, 		/* srcDevice - lan or wan */
+												WAN_DEVICE_NAME,		/* destDevice - lan or wan */
+												"all", 					/* protocol - tcp/udp */
+												"REJECT-ALL", 			/* the name of the rule -- TODO: Better rule names by device name*/
+												"DROP",					/* ACCEPT or DROP or REJECT */
+												"all",
+												dhcpEvent->hostName		/* hostname of the new device */ );
+		if (actionResult) {
+			logOmsGeneralMessage(OMS_CRIT, OMS_SUBSYS_DEVICE_INTERFACE, "Problems installing default restrict rule.");
+			retval = 1;
+		}
+
+		// Lastly, commit rules and restart the firewall subsystem
+		if (!retval)
+			commitAndApplyFirewallRules();
+		else
+			rollbackFirewallConfiguration();
 	}
 	else {
 		logOmsGeneralMessage(OMS_CRIT, OMS_SUBSYS_DEVICE_INTERFACE, "Problems parsing MUD file - no rules installed.");
@@ -267,6 +262,68 @@ int executeMudWithDhcpContext(DhcpEvent *dhcpEvent)
 	}
 
 	return retval;
+}
+
+int enforceMudPolicies(DhcpEvent *dhcpEvent) 
+{
+	int validSignature = INVALID_MUD_FILE_SIG;
+	int returnValue = 0;
+
+	dhcpEvent->mudSigURL = createSigUrlFromMudUrl(dhcpEvent->mudFileURL);
+	dhcpEvent->mudFileStorageLocation = createStorageLocation(dhcpEvent->mudFileURL);
+	dhcpEvent->mudSigFileStorageLocation = createStorageLocation(dhcpEvent->mudSigURL);
+
+	snprintf(myLogMessage, LOG_MSG_BUF_LEN, "EXTRA: The <mudURL> is %s", dhcpEvent->mudFileURL);
+	logOmsGeneralMessage(OMS_INFO, OMS_SUBSYS_GENERAL, myLogMessage);
+	snprintf(myLogMessage, LOG_MSG_BUF_LEN, "EXTRA: The <sigURL> is %s", dhcpEvent->mudSigURL);
+	logOmsGeneralMessage(OMS_INFO, OMS_SUBSYS_GENERAL, myLogMessage);
+
+	/* 
+	 * We are processing a MUD aware device. Go to the MUD file server and get the usage description
+	 * non-zero return code indicates error during communications
+	 * Mud files and signature files are stored in their computed storage locations for future reference
+	 */
+	if (!getOpenMudFile(dhcpEvent->mudFileURL, dhcpEvent->mudFileStorageLocation))
+	{
+		/* 
+		 * For debugging purposes only, allow the p7s verification to be optional when the "-i" option
+		 * is provided. This feature will be removed from a future release and is only provided now
+		 * until certificates compatible with OPENSSL CMS VERIFY commands are in ready use.
+		 */
+		if ((!getOpenMudFile(dhcpEvent->mudSigURL, dhcpEvent->mudSigFileStorageLocation))
+			|| (noFailOnMudValidation))
+		{
+			logOmsGeneralMessage(OMS_INFO, OMS_SUBSYS_MUD_FILE, "MUD and SIG files RETRIEVED!!!");
+			validSignature = validateMudFileWithSig(dhcpEvent);
+			if ((validSignature == VALID_MUD_FILE_SIG) || (noFailOnMudValidation))
+			{	/*
+				 * All files downloaded and signature valid.
+				 * CALL INTERFACE TO CARRY OUT MUD ACTION HERE
+				 */
+				returnValue = executeMudWithDhcpContext(dhcpEvent);
+				returnValue = installMudDbDeviceEntry(mudFileDataDirectory, dhcpEvent->ipAddress, dhcpEvent->macAddress,
+						dhcpEvent->mudFileURL, dhcpEvent->mudFileStorageLocation, dhcpEvent->hostName);
+				return returnValue;
+			}
+			else
+			{
+				logOmsGeneralMessage(OMS_ERROR, OMS_SUBSYS_MUD_FILE, "ERROR: BAD SIGNATURE - FAILED VALIDATION!!!");
+				snprintf(myLogMessage, LOG_MSG_BUF_LEN, "EXTRA: noFailOnMudValidation: %d --- validSignature: %d", noFailOnMudValidation, validSignature);
+				logOmsGeneralMessage(OMS_INFO, OMS_SUBSYS_GENERAL, myLogMessage);
+				return -3;
+			}
+		}
+		else
+		{
+			logOmsGeneralMessage(OMS_ERROR, OMS_SUBSYS_MUD_FILE, "ERROR: NO SIG FILE RETRIEVED!!!");
+			return -2;
+		}
+	}
+	else
+	{
+		logOmsGeneralMessage(OMS_ERROR, OMS_SUBSYS_MUD_FILE, "ERROR: NO MUD FILE RETRIEVED!!!");
+		return -1;
+	}
 }
 
 /*
@@ -278,63 +335,16 @@ int executeMudWithDhcpContext(DhcpEvent *dhcpEvent)
 int executeNewDhcpAction(DhcpEvent *dhcpEvent)
 {
 	char logMsgBuf[LOG_MSG_BUF_LEN];
-	int validSignature = INVALID_MUD_FILE_SIG;
+	int returnValue = -111;  // Setting a return value not returned from the called function
+
 	buildDhcpEventContext(logMsgBuf, "NEW", dhcpEvent);
 	logOmsGeneralMessage(OMS_INFO, OMS_SUBSYS_GENERAL, logMsgBuf);
 
 	if ((dhcpEvent) && (dhcpEvent->mudFileURL))
 	{
-		dhcpEvent->mudSigURL = createSigUrlFromMudUrl(dhcpEvent->mudFileURL);
-		dhcpEvent->mudFileStorageLocation = createStorageLocation(dhcpEvent->mudFileURL);
-		dhcpEvent->mudSigFileStorageLocation = createStorageLocation(dhcpEvent->mudSigURL);
-
-		snprintf(myLogMessage, LOG_MSG_BUF_LEN, "EXTRA: The <mudURL> is %s", dhcpEvent->mudFileURL);
-		logOmsGeneralMessage(OMS_INFO, OMS_SUBSYS_GENERAL, myLogMessage);
-		snprintf(myLogMessage, LOG_MSG_BUF_LEN, "EXTRA: The <sigURL> is %s", dhcpEvent->mudSigURL);
-		logOmsGeneralMessage(OMS_INFO, OMS_SUBSYS_GENERAL, myLogMessage);
-
-		/* We are processing a MUD aware device. Go to the MUD file server and get the usage description */
-		/* non-zero return code indicates error during communications */
-		/* Mud files and signature files are stored in their computed storage locations for future reference */
-		if (!getOpenMudFile(dhcpEvent->mudFileURL, dhcpEvent->mudFileStorageLocation))
-		{
-			/* For debugging purposes only, allow the p7s verification to be optional when the "-i" option
-			 * is provided. This feature will be removed from a future release and is only provided now
-			 * until certificates compatible with OPENSSL CMS VERIFY commands are in ready use.
-			 */
-			if ((!getOpenMudFile(dhcpEvent->mudSigURL, dhcpEvent->mudSigFileStorageLocation))
-				|| (noFailOnMudValidation))
-			{
-				logOmsGeneralMessage(OMS_INFO, OMS_SUBSYS_MUD_FILE, "IN ****NEW**** MUD and SIG FILE RETRIEVED!!!");
-				validSignature = validateMudFileWithSig(dhcpEvent);
-				if ((validSignature == VALID_MUD_FILE_SIG) || (noFailOnMudValidation))
-				{	/*
-					 * All files downloaded and signature valid.
-					 * CALL INTERFACE TO CARRY OUT MUD ACTION HERE
-					 */
-					executeMudWithDhcpContext(dhcpEvent);
-					installMudDbDeviceEntry(mudFileDataDirectory, dhcpEvent->ipAddress, dhcpEvent->macAddress,
-							dhcpEvent->mudFileURL, dhcpEvent->mudFileStorageLocation, dhcpEvent->hostName);
-				}
-				else
-				{
-					logOmsGeneralMessage(OMS_ERROR, OMS_SUBSYS_MUD_FILE, "ERROR: ****NEW**** BAD SIGNATURE - FAILED VALIDATION!!!");
-					snprintf(myLogMessage, LOG_MSG_BUF_LEN, "EXTRA: noFailOnMudValidation: %d --- validSignature: %d", noFailOnMudValidation, validSignature);
-					logOmsGeneralMessage(OMS_INFO, OMS_SUBSYS_GENERAL, myLogMessage);
-					return -1;
-				}
-			}
-			else
-			{
-				logOmsGeneralMessage(OMS_ERROR, OMS_SUBSYS_MUD_FILE, "ERROR: ****NEW**** NO SIG FILE RETRIEVED!!!");
-				return -2;
-			}
-		}
-		else
-		{
-			logOmsGeneralMessage(OMS_ERROR, OMS_SUBSYS_MUD_FILE, "ERROR: ****NEW**** NO MUD FILE RETRIEVED!!!");
-			return -3;
-		}
+		/* Processing a MUD aware device. */
+		returnValue = enforceMudPolicies(dhcpEvent);
+		return returnValue;
 	}
 	else
 	{
@@ -361,16 +371,18 @@ void executeDelDhcpAction(DhcpEvent *dhcpEvent)
 	}
 }
 
-
-int mudFilesAreDifferent(char* oldMudFile, char* newMudFile)
-{	// If MUD files are equal returns 0
+/**
+ * This function verify if two files are different.
+ * Returns 0 if the files are equal, otherwise it returns the result of "diff" operation.
+ */
+int filesAreDifferent(char* oldFile, char* newFile)
+{	
 	int diffRetVal = -1;
 	char command_buffer[CMD_BUF_LENGTH];
+	logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_MUD_FILE, "EXTRA: Comparing the files...");
 
-	// Verify if the new MUD file is different from the old one
-	logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_MUD_FILE, "EXTRA: Comparing the MUD files");
-
-	snprintf(command_buffer, LOG_MSG_BUF_LEN, "diff %s %s > /dev/null", oldMudFile, newMudFile);
+	// Redirecting stdout and stderr on /dev/null
+	snprintf(command_buffer, LOG_MSG_BUF_LEN, "diff %s %s &> /dev/null", oldFile, newFile);
 	command_buffer[LOG_MSG_BUF_LEN-1] = '\0';
 	logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_MUD_FILE, command_buffer);
 	diffRetVal = system(command_buffer);
@@ -402,10 +414,10 @@ void executeOldDhcpAction(DhcpEvent *dhcpEvent)
 
 	if (dhcpEvent)
 	{
-		/* TODO: Need to validate the IP address is the same as it was the last time we saw this */
-		/*       If not, we need to do a remove from the device in the MUD DB file and re-add it */
+		/* The MUD file is retrieved.
+		 * If it is different from the one already stored, old rules are removed and the new MUD file is enforced. */
 
-		/* In this part we verify it the MUD file was changed. */
+		// 0. Is there a MUD file URL?
 		if (dhcpEvent->mudFileURL) {
 			dhcpEvent->mudFileStorageLocation = createStorageLocation(dhcpEvent->mudFileURL);
 			snprintf(myLogMessage, LOG_MSG_BUF_LEN, "EXTRA: The mudURL is <%s>", dhcpEvent->mudFileURL);
@@ -413,51 +425,48 @@ void executeOldDhcpAction(DhcpEvent *dhcpEvent)
 			snprintf(myLogMessage, LOG_MSG_BUF_LEN, "EXTRA: The mudFileStorageLocation is <%s>", dhcpEvent->mudFileStorageLocation);
 			logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_GENERAL, myLogMessage);
 
-			// 0. Verify if the MUD file already really exists
+			// 1. Verifying if the MUD file already exists
 			if(access(dhcpEvent->mudFileStorageLocation, F_OK) != 0) {
 				snprintf(myLogMessage, LOG_MSG_BUF_LEN, "EXTRA: There is no MUD file called <%s>", dhcpEvent->mudFileStorageLocation);
 				logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_MUD_FILE, myLogMessage);
-				executeNewDhcpAction(dhcpEvent);
+				enforceMudPolicies(dhcpEvent);
 			} else {
-				// 1. Dinamycally creating a string for containing the temporary file used to compare old with new MUD file
+				// 2. Creating a string for containing the temporary file (used to have a comparison with the old one)
 				tmpFile = replaceExtension(dhcpEvent->mudFileStorageLocation, "tmp.json");
-				// strncpy(tmpFile, dhcpEvent->mudFileStorageLocation, strlen(dhcpEvent->mudFileStorageLocation));
-				// snprintf(tmpFile, MAXLINE, "%s.tmp.json", dhcpEvent->mudFileStorageLocation);
-				// logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_GENERAL, tmpFile);				
-				snprintf(myLogMessage, LOG_MSG_BUF_LEN, "EXTRA: The tmpMUDFile is <%s>", tmpFile);
+				snprintf(myLogMessage, LOG_MSG_BUF_LEN, "EXTRA: The temporary MUD file will be <%s>", tmpFile);
 				logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_GENERAL, myLogMessage);	
 
-				// 2. Download the new MUD file 
+				// 3. Download the new MUD file 
 				if(!getOpenMudFile(dhcpEvent->mudFileURL, tmpFile)) {  // != 0 there is an error
-					retValue = mudFilesAreDifferent(dhcpEvent->mudFileStorageLocation, tmpFile);
+					retValue = filesAreDifferent(dhcpEvent->mudFileStorageLocation, tmpFile);
 					if(retValue != 0) {
-						logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_MUD_FILE, "MUD file changed!");
-						// 3. Delete old firewall rules (if present)
+						logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_MUD_FILE, "The MUD file is changed!");
+						// 4. Delete old firewall rules (if present)
 						executeDelDhcpAction(dhcpEvent);
-						logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_MUD_FILE, "Old FW rules deleted");
-						// 4. Install new firewall Rules (the MUD file will be downloaded again)
-						retValue = executeNewDhcpAction(dhcpEvent);
+						logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_MUD_FILE, "Old firewall rules deleted");
+						// 5. Install new firewall Rules (the MUD file will be downloaded again)
+						retValue = enforceMudPolicies(dhcpEvent);
 						if(retValue == 0)
-							logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_MUD_FILE, "New rules created");
+							logOmsGeneralMessage(OMS_INFO, OMS_SUBSYS_MUD_FILE, "New MUD rules enforced!");
 						else
-							logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_MUD_FILE, "Error creating the new rules!");
+							logOmsGeneralMessage(OMS_ERROR, OMS_SUBSYS_MUD_FILE, "Error creating the new rules!");
 					}
-					else { // Same -> Do nothing
-						logOmsGeneralMessage(OMS_INFO, OMS_SUBSYS_MUD_FILE, "MUD file is not changed!");
+					else { // MUD file not changed -> Do nothing
+						logOmsGeneralMessage(OMS_INFO, OMS_SUBSYS_MUD_FILE, "MUD file is not changed... Nothing to be done!");
 					}
-					// 5. Delete the tmp file
+					// 6. Delete the temporary file
 					remove(tmpFile);
 					logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_MUD_FILE, "tmpFile deleted");
-				} else {
-					logOmsGeneralMessage(OMS_ERROR, OMS_SUBSYS_MUD_FILE, "ERROR: ****OLD**** NO MUD FILE RETRIEVED!!!");
+				} else {  
+					// 4. Error downloading the MUD file
+					logOmsGeneralMessage(OMS_ERROR, OMS_SUBSYS_MUD_FILE, "Error retrieving the MUD file!");
 				}
 			}
 		}
 	}
 }
 
-void
-executeOpenMudDhcpAction(DhcpEvent *dhcpEvent)
+void executeOpenMudDhcpAction(DhcpEvent *dhcpEvent)
 {
 	if (dhcpEvent) {
 		switch (dhcpEvent->action) {

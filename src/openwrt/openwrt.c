@@ -160,8 +160,8 @@ int installMudDbDeviceEntry(char *mudDbDir, char *ipAddr, char *macAddress, char
 	char execBuf[BUFSIZE];
 	int retval;
 
-	snprintf(execBuf, BUFSIZE, "%s -d %s%s -i %s -m %s -c %s -u %s -f %s", MUD_DB_CREATE_SCRIPT, mudDbDir, MUD_STATE_FILE, ipAddr,
-			macAddress,
+	snprintf(execBuf, BUFSIZE, "%s -d %s%s -i %s -m %s -c %s -u %s -f %s", 
+	        MUD_DB_CREATE_SCRIPT, mudDbDir, MUD_STATE_FILE, ipAddr, macAddress,
 			(hostName?hostName:"-"),
 			(mudUrl?mudUrl:"-"),
 			(mudLocalFile?mudLocalFile:"-"));
@@ -205,16 +205,15 @@ int installDnsRule(char *targetDomainName, char *srcIpAddr, char *srcMacAddr, ch
 	fp = fopen (dnsFileNameWithPath, "a");
 
 	if (fp != NULL)
-        {
-            fprintf(fp, "%s %s %s %s\n", targetDomainName, srcHostName, srcIpAddr, srcMacAddr);
-
-            fflush(fp);
-            fclose(fp);
-        }
-        else
+    {
+		fprintf(fp, "%s %s %s %s\n", targetDomainName, srcHostName, srcIpAddr, srcMacAddr);
+		fflush(fp);
+		fclose(fp);
+    }
+    else
 	{
-            logOmsGeneralMessage(OMS_CRIT, OMS_SUBSYS_DEVICE_INTERFACE, "Could not write DNS rule to file.");
-            retval = 1;
+		logOmsGeneralMessage(OMS_CRIT, OMS_SUBSYS_DEVICE_INTERFACE, "Could not write DNS rule to file.");
+		retval = 1;
 	}
 
 	return retval;
@@ -247,11 +246,11 @@ int verifyCmsSignature(char *mudFileLocation, char *mudSigFileLocation)
 		logOmsGeneralMessage(OMS_ERROR, OMS_SUBSYS_DEVICE_INTERFACE, execBuf);
 		sigStatus = INVALID_MUD_FILE_SIG;
 
-		retval = WEXITSTATUS(retval);  // To extract real error value is necessary to use this macro
+		retval = WEXITSTATUS(retval);  // To extract system real exit value is necessary to use this macro.
 		snprintf(logMessage, BUFSIZE, "EXTRA:: Signature failed: %d", retval);
 		logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_MUD_FILE, logMessage);
 
-		// If the signature failed, I re-execute the command and add the error on a dedicated file
+		// If the signature failed, the command is re-executed and the error is added on a dedicated file.
 		snprintf(execBuf, BUFSIZE, "openssl cms -verify -in %s -inform DER -content %s -purpose any >> /var/log/mud_signature_failures.txt 2>&1", mudSigFileLocation, mudFileLocation);
 		execBuf[BUFSIZE-1] = '\0';
 		system(execBuf);
