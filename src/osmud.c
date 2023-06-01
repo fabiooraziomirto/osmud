@@ -33,6 +33,7 @@
 #include "version.h"
 
 #define MAXLINE 1024
+#define LOG_MSG_BUF_LEN 4096
 
 /* Default locations for osMUD resources based on OpenWRT */
 #define MUD_FILE_DIRECTORY "/var/state/osmud/mudfiles"
@@ -181,7 +182,8 @@ void doProcessLoop(FD filed)
 void printVersion()
 {
 	printf("osmud\n");
-	printf("    Version: %s\n", build_git_sha);
+	printf("    Version: %s\n", build_version);
+	printf("    Last Commit: %s\n", build_git_sha);
 	printf("    Build Date: %s\n", build_git_time);
 }
 
@@ -217,16 +219,16 @@ int writePidFile(pid_t osMudPid) {
 	fp = fopen_with_path(osmudPidFile, "w");
 
 	if (fp != NULL)
-        {
-            fprintf(fp, "%d\n", osMudPid);
-
-            fflush(fp);
-            fclose(fp);
-        }
-        else
 	{
-            logOmsGeneralMessage(OMS_CRIT, OMS_SUBSYS_DEVICE_INTERFACE, "Could not write to PID file.");
-            retval = 1;
+		fprintf(fp, "%d\n", osMudPid);
+
+		fflush(fp);
+		fclose(fp);
+	}
+	else
+	{
+		logOmsGeneralMessage(OMS_CRIT, OMS_SUBSYS_DEVICE_INTERFACE, "Could not write to PID file.");
+		retval = 1;
 	}
 
 	return retval;
@@ -234,7 +236,9 @@ int writePidFile(pid_t osMudPid) {
 
 void logInitialSettings()
 {
-	char msgBuf[4096];
+	char msgBuf[LOG_MSG_BUF_LEN];
+	sprintf(msgBuf, "\nOsMUD\n Version: %s\n Build Date: %s\n Last Commit: %s", build_version, build_git_time, build_git_sha);
+	logOmsGeneralMessage(OMS_INFO, OMS_SUBSYS_GENERAL, msgBuf);
 	logOmsGeneralMessage(OMS_INFO, OMS_SUBSYS_GENERAL, "  Starting OSMUD controlling with initial settings:");
 
 	sprintf(msgBuf, "    PID FILE: %s", osmudPidFile);
@@ -249,7 +253,7 @@ void logInitialSettings()
 	sprintf(msgBuf, "    MUD file storage directory: %s", mudFileDataDirectory);
 	logOmsGeneralMessage(OMS_INFO, OMS_SUBSYS_GENERAL, msgBuf);
 
-	sprintf(msgBuf, "    sMUD startup configuration file: %s", osmudConfigFile);
+	sprintf(msgBuf, "    osMUD startup configuration file: %s", osmudConfigFile);
 	logOmsGeneralMessage(OMS_INFO, OMS_SUBSYS_GENERAL, msgBuf);
 
 	sprintf(msgBuf, "    osMUD logger path and file: %s", osMudLogFile);

@@ -16,6 +16,7 @@
 #ifndef _OMS_VERSION
 #define _OMS_VERSION
 
+extern const char * build_version;
 extern const char * build_git_sha;
 extern const char * build_git_time;
 

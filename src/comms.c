@@ -48,13 +48,13 @@ int getOpenMudFile(char *mudFile, char *outputFile)
   char message[1000];
 
   curl_global_init(CURL_GLOBAL_DEFAULT);
-                logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_COMMUNICATION, "curl_easy_perform() doing it now....");
+  logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_COMMUNICATION, "curl_easy_perform() doing it now....");
 
   curl = curl_easy_init();
   if(curl) {
-	curlData.fileName = outputFile;
-	curlData.outputFile = fopen(outputFile, "w");
-	curlData.data = 1;
+    curlData.fileName = outputFile;
+    curlData.outputFile = fopen(outputFile, "w");
+    curlData.data = 1;
 
     curl_easy_setopt(curl, CURLOPT_URL, mudFile);
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_data);
@@ -79,10 +79,10 @@ int getOpenMudFile(char *mudFile, char *outputFile)
     retval = curl_easy_perform(curl);
 
     if(retval != CURLE_OK) {
-        sprintf(message, "curl_easy_perform() failed: %s\n", curl_easy_strerror(retval));
-		logOmsGeneralMessage(OMS_ERROR, OMS_SUBSYS_COMMUNICATION, message);
+      sprintf(message, "curl_easy_perform() failed: %s\n", curl_easy_strerror(retval));
+		  logOmsGeneralMessage(OMS_ERROR, OMS_SUBSYS_COMMUNICATION, message);
     } else {
-		logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_COMMUNICATION, "curl_easy_perform() success");
+		  logOmsGeneralMessage(OMS_DEBUG, OMS_SUBSYS_COMMUNICATION, "curl_easy_perform() success");
     }
 
     /* always cleanup */
